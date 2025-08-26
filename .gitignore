@@ -1,0 +1,7 @@
+# .gitignore (root)
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/private_key.pem
+*.pem
+    
+terraform/.terraform/
