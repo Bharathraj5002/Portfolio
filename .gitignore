@@ -5,3 +5,4 @@ terraform/private_key.pem
 *.pem
     
 terraform/.terraform/
+terraform/.terraform.lock.hcl
