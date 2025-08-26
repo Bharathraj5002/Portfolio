@@ -91,20 +91,3 @@ data "aws_ami" "ubuntu" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
-
-# Outputs
-output "ec2_public_ip" {
-  description = "Public IP of EC2"
-  value       = aws_instance.portfolio.public_ip
-}
-
-output "ec2_public_dns" {
-  description = "Public DNS of EC2"
-  value       = aws_instance.portfolio.public_dns
-}
-
-output "private_key_pem" {
-  description = "Private key content (do NOT save locally)"
-  value       = tls_private_key.portfolio.private_key_pem
-  sensitive   = true
-}
