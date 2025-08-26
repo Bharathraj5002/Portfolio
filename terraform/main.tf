@@ -1,47 +1,31 @@
-# default VPC
+provider "aws" {
+  region = "us-east-2"
+}
+
+# Generate an SSH key pair in Terraform (kept in state, not saved locally)
+resource "tls_private_key" "portfolio" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "aws_key_pair" "portfolio" {
+  key_name   = "portfolio"
+  public_key = tls_private_key.portfolio.public_key_openssh
+}
+
+# Get the default VPC
 data "aws_vpc" "default" {
   default = true
 }
 
-# default subnets in the VPC
-data "aws_subnets" "default_vpc_subnets" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
-# latest Ubuntu 22.04
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-}
-
-# generate SSH key locally
-resource "tls_private_key" "portfolio" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-# AWS key pair
-resource "aws_key_pair" "portfolio" {
-  key_name   = var.key_name
-  public_key = tls_private_key.portfolio.public_key_openssh
-}
-
-# Security group
+# Create a security group
 resource "aws_security_group" "portfolio_sg" {
   name        = "portfolio-sg"
   description = "Allow HTTP, 8080, SSH"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "HTTP"
+    description = "Allow HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -49,7 +33,7 @@ resource "aws_security_group" "portfolio_sg" {
   }
 
   ingress {
-    description = "Custom TCP 8080"
+    description = "Allow custom 8080"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
@@ -57,11 +41,11 @@ resource "aws_security_group" "portfolio_sg" {
   }
 
   ingress {
-    description = "SSH"
+    description = "Allow SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_ssh_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -70,12 +54,24 @@ resource "aws_security_group" "portfolio_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "portfolio-sg"
+  }
 }
 
-# EC2 instance
+# Get the default subnet(s)
+data "aws_subnets" "default_vpc_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+# Create EC2 instance
 resource "aws_instance" "portfolio" {
   ami                    = data.aws_ami.ubuntu.id
-  instance_type          = var.instance_type
+  instance_type          = "t2.micro"
   subnet_id              = element(data.aws_subnets.default_vpc_subnets.ids, 0)
   vpc_security_group_ids = [aws_security_group.portfolio_sg.id]
   key_name               = aws_key_pair.portfolio.key_name
@@ -83,4 +79,32 @@ resource "aws_instance" "portfolio" {
   tags = {
     Name = "portfolio"
   }
+}
+
+# Ubuntu AMI (latest for us-east-2)
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+}
+
+# Outputs
+output "ec2_public_ip" {
+  description = "Public IP of EC2"
+  value       = aws_instance.portfolio.public_ip
+}
+
+output "ec2_public_dns" {
+  description = "Public DNS of EC2"
+  value       = aws_instance.portfolio.public_dns
+}
+
+output "private_key_pem" {
+  description = "Private key content (do NOT save locally)"
+  value       = tls_private_key.portfolio.private_key_pem
+  sensitive   = true
 }
