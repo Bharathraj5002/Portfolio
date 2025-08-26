@@ -1,6 +1,3 @@
-provider "aws" {
-  region = "us-east-2"
-}
 
 # Generate an SSH key pair in Terraform (kept in state)
 resource "tls_private_key" "portfolio" {
