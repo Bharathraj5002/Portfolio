@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-east-2"
 }
 
-# Generate an SSH key pair in Terraform (kept in state, not saved locally)
+# Generate an SSH key pair in Terraform (kept in state)
 resource "tls_private_key" "portfolio" {
   algorithm = "RSA"
   rsa_bits  = 2048
@@ -60,11 +60,22 @@ resource "aws_security_group" "portfolio_sg" {
   }
 }
 
-# Get the default subnet(s)
+# Get all subnets in default VPC
 data "aws_subnets" "default_vpc_subnets" {
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
+  }
+}
+
+# Ubuntu AMI (latest for us-east-2)
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
 
@@ -78,16 +89,5 @@ resource "aws_instance" "portfolio" {
 
   tags = {
     Name = "portfolio"
-  }
-}
-
-# Ubuntu AMI (latest for us-east-2)
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
