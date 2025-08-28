@@ -52,7 +52,12 @@ jobs:
         run: docker run -d -p 8080:80 --name portfolio-test ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
 
       - name: Wait for Nginx to start
-        run: sleep 5
+        run: |
+          for i in {1..10}; do
+            curl -fs http://localhost:8080 && break
+            echo "Waiting for container..."
+            sleep 3
+          done
 
       - name: Smoke Test Homepage
         run: |
@@ -60,7 +65,6 @@ jobs:
 
       - name: Cleanup Test Container
         run: docker rm -f portfolio-test || true
-
 
   deploy:
     runs-on: ubuntu-latest
@@ -72,7 +76,7 @@ jobs:
           name: image-tag
 
       - name: Load Image Tag
-        run: echo "IMAGE_TAG=$(cat image-tag)" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=$(cat image-tag/image-tag.txt)" >> $GITHUB_ENV
 
       - name: Setup SSH Key
         run: |
@@ -83,7 +87,7 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} <<EOF
-            sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
             sudo docker stop portfolio || true
             sudo docker rm portfolio || true
