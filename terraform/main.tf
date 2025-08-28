@@ -10,6 +10,13 @@ resource "aws_key_pair" "portfolio" {
   public_key = tls_private_key.portfolio.public_key_openssh
 }
 
+# Save the private key to a .pem file locally
+resource "local_file" "portfolio_private_key" {
+  content  = tls_private_key.portfolio.private_key_pem
+  filename = "${path.module}/portfolio.pem"
+  file_permission = "0600"
+}
+
 # Get the default VPC
 data "aws_vpc" "default" {
   default = true
