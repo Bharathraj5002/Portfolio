@@ -42,14 +42,17 @@ jobs:
       - name: Load Image Tag
         run: echo "IMAGE_TAG=$(cat image-tag/image-tag.txt)" >> $GITHUB_ENV
 
+      - name: Debug Image Tag
+        run: echo "Loaded IMAGE_TAG=${{ env.IMAGE_TAG }}"
+
       - name: Docker Login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Pull Docker Image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
 
       - name: Run Container for Testing
-        run: docker run -d -p 8080:80 --name portfolio-test ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
+        run: docker run -d -p 8080:80 --name portfolio-test ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
 
       - name: Wait for Nginx to start
         run: |
@@ -88,11 +91,12 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} <<EOF
             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
             sudo docker stop portfolio || true
             sudo docker rm portfolio || true
-            sudo docker run -d -p 8080:80 --name portfolio --restart always ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
+            sudo docker run -d -p 8080:80 --name portfolio --restart always ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
           EOF
+
 
 
 
