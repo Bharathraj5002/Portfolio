@@ -28,7 +28,7 @@ This repository contains:
 - **Terraform scripts** to provision AWS EC2 and security groups
 - **GitHub Actions workflow** for automated CI/CD pipeline
 
-Once deployed, access your application via EC2 public IP on port **80**.
+Once deployed, access your application via EC2 public IP on port **8080**.
 
 ***
 
@@ -49,7 +49,7 @@ Before getting started, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-[git clone https://github.com/<your-username>/<repo-name>.git](https://github.com/Bharathraj5002/Portfolio.git)
+(https://github.com/Bharathraj5002/Portfolio.git)
 cd Portfolio
 ```
 
