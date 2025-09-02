@@ -25,7 +25,6 @@ This repository contains:
 
 - A sample web portfolio application
 - **Dockerfile** for containerization
-- **docker-compose.yml** for multi-container setup
 - **Terraform scripts** to provision AWS EC2 and security groups
 - **GitHub Actions workflow** for automated CI/CD pipeline
 
@@ -38,7 +37,7 @@ Once deployed, access your application via EC2 public IP on port **80**.
 Before getting started, ensure you have:
 
 - **Git**
-- **Docker** and **Docker Compose**
+- **Docker**
 - **Terraform**
 - AWS account with rights to create EC2 and security groups
 - **AWS CLI** configured (`aws configure`)
@@ -50,8 +49,8 @@ Before getting started, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+[git clone https://github.com/<your-username>/<repo-name>.git](https://github.com/Bharathraj5002/Portfolio.git)
+cd Portfolio
 ```
 
 
@@ -73,6 +72,12 @@ Provide:
 ## Terraform Deployment
 
 Terraform provisions EC2 and security group resources.
+
+- **Change to Terraform:**
+
+```bash
+cd terraform
+```
 
 - **Initialize Terraform:**
 
@@ -97,28 +102,50 @@ Type `yes` when prompted. Note the EC2 public IP from the output.
 
 ***
 
+
 ## Docker Setup (Manual Deployment)
+
+Terraform will create the `portfolio.pem` file (private key). Make sure it's in your local directory.
+- **Update permissions for the key file:**
+
+```bash
+chmod 400 portfolio.pem
+```
 
 - **SSH into your EC2 instance:**
 
 ```bash
-ssh -i <path-to-private-key> ec2-user@<EC2_PUBLIC_IP>
+ssh -i portfolio.pem ec2-user@<EC2_PUBLIC_IP>
 ```
 
-- **On the server:**
+- **Install Docker on the EC2 instance (Ubuntu):**
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
-docker-compose up -d
-docker ps
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo docker --version
+```
+
+- **Pull and run the portfolio Docker image from Docker Hub:**
+
+```bash
+sudo docker run -d -p 8080:80 bharathraj5002/portfolio:latest
+sudo docker ps
 ```
 
 
 Your application should now be available at:
-`http://<EC2_PUBLIC_IP>:80`
+`http://<EC2_PUBLIC_IP>:8080`
 
 ***
+
+
 
 ## GitHub Actions Configuration
 
@@ -135,7 +162,7 @@ Push code changes; workflow will:
 
 - Build Docker image
 - Push to Docker Hub
-- SSH into EC2, pull/run image with Docker Compose
+- SSH into EC2, pull/run image with Docker Image
 
 ***
 
@@ -144,7 +171,7 @@ Push code changes; workflow will:
 Open a browser and visit:
 
 ```
-http://<EC2_PUBLIC_IP>:80
+http://<EC2_PUBLIC_IP>:8080
 ```
 
 You should see your web portfolio.
@@ -158,7 +185,7 @@ You should see your web portfolio.
 - **Docker issues:** Check logs:
 
 ```bash
-docker-compose logs
+docker <Image_name> logs
 ```
 
 - **Port/firewall issues:** Make sure security group allows inbound traffic on port 80.
@@ -169,7 +196,7 @@ docker-compose logs
 
 - Always use your own GitHub repository for GitHub Actions to function.
 - Ensure all secrets are set correctly.
-- Docker and Docker Compose must be installed on your EC2 instance.
+- Docker must be installed on your EC2 instance.
 - Run Terraform once per deployment unless destroying/recreating the instance.
 
 ***
