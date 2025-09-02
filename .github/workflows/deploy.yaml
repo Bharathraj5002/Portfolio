@@ -19,7 +19,9 @@ jobs:
         run: |
           IMAGE_TAG=${{ github.sha }}
           docker build -t ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/portfolio:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/portfolio:$IMAGE_TAG
+          docker push ${{ secrets.DOCKER_USERNAME }}/portfolio:latest
 
       - name: Save Image Tag
         run: echo "${{ github.sha }}" > image-tag.txt
@@ -79,7 +81,12 @@ jobs:
           name: image-tag
 
       - name: Load Image Tag
-        run: echo "IMAGE_TAG=$(cat image-tag.txt)" >> $GITHUB_ENV
+        run: |
+          if [ -f image-tag.txt ]; then
+            echo "IMAGE_TAG=$(cat image-tag.txt)" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          fi
 
       - name: Debug Image Tag
         run: echo "Deploying with IMAGE_TAG=${{ env.IMAGE_TAG }}"
@@ -99,6 +106,7 @@ jobs:
             sudo docker rm portfolio || true
             sudo docker run -d -p 8080:80 --name portfolio --restart always ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
           EOF
+
 
 
 
