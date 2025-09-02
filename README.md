@@ -198,7 +198,8 @@ docker <Image_name> logs
 - Ensure all secrets are set correctly.
 - Docker must be installed on your EC2 instance.
 - Run Terraform once per deployment unless destroying/recreating the instance.
-
+- For stoping the aws EC2 you can you **terraform destroy** or manually remove the EC2 instance.
+  
 ***
 
 ## License
