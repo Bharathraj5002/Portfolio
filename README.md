@@ -49,7 +49,7 @@ Before getting started, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-(https://github.com/Bharathraj5002/Portfolio.git)
+git clone https://github.com/Bharathraj5002/Portfolio.git
 cd Portfolio
 ```
 
