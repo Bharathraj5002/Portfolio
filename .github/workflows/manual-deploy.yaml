@@ -7,17 +7,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Download Image Tag
-        uses: actions/download-artifact@v4
-        with:
-          name: image-tag
-
-      - name: Load Image Tag
-        run: echo "IMAGE_TAG=$(cat image-tag.txt)" >> $GITHUB_ENV
-
-      - name: Debug Image Tag
-        run: echo "Deploying with IMAGE_TAG=${{ env.IMAGE_TAG }}"
-
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
@@ -28,8 +17,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} <<EOF
             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/portfolio:latest
             sudo docker stop portfolio || true
             sudo docker rm portfolio || true
-            sudo docker run -d -p 8080:80 --name portfolio --restart always ${{ secrets.DOCKER_USERNAME }}/portfolio:${{ env.IMAGE_TAG }}
+            sudo docker run -d -p 8080:80 --name portfolio --restart always ${{ secrets.DOCKER_USERNAME }}/portfolio:latest
           EOF
